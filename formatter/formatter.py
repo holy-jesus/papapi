@@ -1,5 +1,4 @@
-from typing import overload
-from random import random
+from time import time
 import csv
 import os
 
@@ -73,7 +72,7 @@ class Formatter:
             csv_list.append(csv_dict)
         return csv_list
 
-    def format(self) -> list[Image.Image]:
+    def format(self, text = None) -> list[Image.Image] | Image.Image:
         size = self.image.size
         images = []
         for entry in self.csv_list:
@@ -89,10 +88,12 @@ class Formatter:
                 )
                 draw.text(
                     (size_of_element[0], size_of_element[1]),
-                    text=value,
+                    text=text or value,
                     fill=(0, 0, 0),
                     font=self._font,
                 )
+            if text:
+                return new_image
             images.append(new_image)
         return images
 
