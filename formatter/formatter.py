@@ -1,3 +1,4 @@
+from typing import Literal
 from time import time
 import csv
 import os
@@ -10,92 +11,79 @@ class Formatter:
         self,
         path_to_image: str | bytes,
         path_to_csv_file: str | bytes,
-        areas: dict[str, tuple],
-        font: str = None,
-        font_size: int = 32,
     ) -> None:
         if isinstance(path_to_image, str):
             if not os.path.isfile(path_to_image):
                 raise FileNotFoundError("No such image.")
         self.image: Image.Image = Image.open(path_to_image)
-        if isinstance(path_to_csv_file, str):
+        self.csv_list = self.__read_csv(path_to_csv_file)
+        self.fields = {}
 
-            if not os.path.isfile(path_to_csv_file):
-                raise FileNotFoundError("No such csv file.")
-            elif os.path.isfile(path_to_csv_file):
-                csv_file = open(path_to_csv_file, "r")
-        else:
-            csv_file = path_to_csv_file
-        self.csv_list = self.__read_csv(csv_file)
-        self._font_size = font_size
-        if font is None:
-            self._font_filename = "Ubuntu-L.ttf" if os.name == "Linux" else "arial.ttf"
-            self._font = ImageFont.truetype(self._font_filename, self._font_size)
-        else:
-            self._font_filename = font
-            self._font = ImageFont.truetype(font, self._font_size)
-        print(self.csv_list)
-        self.areas = areas
+    def set_field(
+        self,
+        name: str,
+        value: dict[Literal["font", "size", "percentage"], str | int | tuple],
+    ):
+        percentage = value["percentage"]
+        size = self.image.size
+        coord_of_element = (size[0] * percentage[0], size[1] * percentage[1])
+        value["coordinates"] = coord_of_element
+        del value["percentage"]
+        self.fields[name] = value
 
-    @property
-    def font_size(self):
-        return self._font_size
+    def get_preview_for_field(self, name: str, text: str = None) -> Image.Image:
+        if text is None:
+            text = "Тестовый текст"
+        field = self.fields[name]
+        font = ImageFont.truetype(field["font"], field["size"])
+        new_image = self.image.copy()
+        draw = ImageDraw.Draw(new_image)
+        draw.text(
+            xy=field["coordinates"],
+            text=text,
+            fill=(255, 255, 255),
+            font=font,
+        )
+        return new_image
 
-    @font_size.setter
-    def font_size(self, value: int):
-        if value >= 0:
-            self._font_size = value
-            if self._font_filename:
-                self._font = ImageFont.truetype(self._font_filename, self._font_size)
-
-        else:
-            raise ValueError("Font size cant be negative")
-    
-    @property
-    def font(self):
-        return self._font_filename
-
-    @font.setter
-    def font(self, value: str):
-        self._font = ImageFont.truetype(value, self.font_size)
-        self._font_filename = value
+    def get_columns(self) -> tuple[str]:
+        return tuple(self.csv_list[0].keys())
 
     @staticmethod
     def __read_csv(csv_file: bytes) -> list[dict]:
         csv_list = []
         reader = csv.reader(csv_file)
         first_row = next(reader)
+        print(first_row)
         for row in reader:
+            print(row)
             csv_dict = {}
             for num in range(len(first_row)):
                 csv_dict[first_row[num]] = row[num]
             csv_list.append(csv_dict)
+        if not csv_list:
+            raise ValueError("You can't pass blank csv file")
         return csv_list
 
-    def format(self, text = None) -> list[Image.Image] | Image.Image:
+    def format(self) -> list[Image.Image] | Image.Image:
         size = self.image.size
         images = []
         for entry in self.csv_list:
             new_image = self.image.copy()
+            print(self.fields)
             draw = ImageDraw.Draw(new_image)
             for name, value in entry.items():
-                percent = self.areas[name]
-                size_of_element = (
-                    size[0] * percent[0],
-                    size[1] * percent[1],
-                    size[0] * percent[2],
-                    size[1] * percent[3],
-                )
+                d = self.fields[name]
+                font = ImageFont.truetype(d["font"], int(d["size"]))
                 draw.text(
-                    (size_of_element[0], size_of_element[1]),
-                    text=text or value,
+                    (d["coordinates"]),
+                    text=value,
                     fill=(0, 0, 0),
-                    font=self._font,
+                    font=font,
                 )
-            if text:
-                return new_image
             images.append(new_image)
         return images
+
 
 if __name__ == "__main__":
     image = open("Diploma.png", "rb")
@@ -124,4 +112,3 @@ if __name__ == "__main__":
     formatter.font_size = 300
     for image in formatter.format():
         image.show()
-    # image = formatter.make_preview("Ubuntu-L.ttf", 300
