@@ -10,7 +10,7 @@ sudo apt install python3 python3-pip python3-venv git
 `
 git clone https://github.com/holy-jesus/papapi.git
 `
-3. В папке репозитория сделайте виртуальную среду разработки
+3. В папке репозитория создайте виртуальную среду разработки
 `
 python3 -m venv ./venv/
 `
