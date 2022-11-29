@@ -12,8 +12,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     document.getElementById("columnName").innerHTML = columnsFromCsv[current]
     initDb(loadImage);
+    $("body").css("opacity", "1");
 });
 
+function close() {
+    $("div").css("opacity", "0");
+    setTimeout(function() {
+        window.location.href = "/result";
+    }, 500);
+}
 
 function initDb(callback) {
     let request = indexedDB.open('diplomas', dbVersion);
@@ -124,7 +131,7 @@ function prev() {
 
 function nextPage() {
     sessionStorage.setItem("dataToBackend", JSON.stringify(dataToBackend))
-    window.location.href = "/result"
+    close();
 }
 
 document.addEventListener("click", printMousePos);

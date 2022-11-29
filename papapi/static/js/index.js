@@ -4,9 +4,15 @@ let dbVersion = 1;
 document.addEventListener('DOMContentLoaded', () => {
     initDb();
     document.querySelector('#picture').addEventListener('change', saveImage );
-
+    $("body").css("opacity", "1");
 });
 
+function close() {
+    $("div").css("opacity", "0");
+    setTimeout(function() {
+        window.location.href = "/second_step";
+    }, 500);
+}
 
 function initDb() {
     let request = indexedDB.open('diplomas', dbVersion);
@@ -41,8 +47,9 @@ function saveImage(e) {
         }
 
         trans.oncomplete = function(e) {
-            sessionStorage.setItem("step", 2)
-            window.location.href = "/second_step"
+            sessionStorage.setItem("step", 2);
+            close();
+            
         }
     }
 }
