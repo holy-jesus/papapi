@@ -1,8 +1,6 @@
-import csv
-import os
 from random import randint
 from time import time
-from typing import Any, Literal, Union
+from typing import Any, Literal, Union, List, Dict
 import base64
 from io import BytesIO
 
@@ -84,8 +82,8 @@ def percent_to_pixels(areas, size_of_image):
 
 
 def format(
-    template, csv, fields: dict[str, Any], preview = False
-) -> list[Image.Image]:
+    template, csv, fields: Dict[str, Any], preview = False
+) -> List[Image.Image]:
     template = Image.open(BytesIO(template))
     images = []
     for entry in csv:
