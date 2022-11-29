@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function close() {
-    $("div").css("opacity", "0");
+    $("body").css("opacity", "0");
     setTimeout(function() {
         window.location.href = "/";
     }, 500);
