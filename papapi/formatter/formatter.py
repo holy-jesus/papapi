@@ -81,9 +81,7 @@ def percent_to_pixels(areas, size_of_image):
     return (size_of_image[0] * areas[0], size_of_image[1] * areas[1])
 
 
-def format(
-    template, csv, fields: Dict[str, Any], preview = False
-) -> List[Image.Image]:
+def format(template, csv, fields: Dict[str, Any], preview=False) -> List[Image.Image]:
     template = Image.open(BytesIO(template))
     images = []
     for entry in csv:
@@ -108,11 +106,9 @@ def format(
             buffered = BytesIO()
             new_image.save(buffered, format="PNG")
             return base64.b64encode(buffered.getvalue())
-                
+
         images.append(new_image)
     return images
-
-
 
 
 if __name__ == "__main__":
