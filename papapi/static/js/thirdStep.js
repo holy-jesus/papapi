@@ -86,6 +86,7 @@ function printMousePos(event) {
 
         dataToBackend["fields"][columnsFromCsv[current]]['percentage'] = [((event.clientX - elemRect.left) / elemRect.width), ((event.clientY - elemRect.top) / elemRect.height)]
         dataToBackend["fields"][columnsFromCsv[current]]["size"] = document.getElementById("b").value
+        dataToBackend["fields"][columnsFromCsv[current]]["font"] = document.getElementById("a").value
     }
 }
 
@@ -99,7 +100,7 @@ function download_preview() {
             document.querySelector('#iimage').src = 'data:image/png;base64,' + js['image']
         }
     }
-    xmlHttp.open("POST", "/preview", true); // true for asynchronous 
+    xmlHttp.open("POST", "/preview", true);
     xmlHttp.setRequestHeader("Content-type", "application/json")
     console.log(dataToBackend)
     xmlHttp.send(JSON.stringify(dataToBackend));
@@ -116,6 +117,8 @@ function next() {
         document.getElementById("showpreview").setAttribute("hidden", true)
     }
     document.getElementById("columnName").innerHTML = columnsFromCsv[current]
+    dataToBackend["fields"][columnsFromCsv[current]]["size"] = document.getElementById("b").value
+    dataToBackend["fields"][columnsFromCsv[current]]["font"] = document.getElementById("a").value
 }
 
 function prev() {
