@@ -81,19 +81,16 @@ def percent_to_pixels(areas, size_of_image):
     return (size_of_image[0] * areas[0], size_of_image[1] * areas[1])
 
 
-def format(template, csv, fields: Dict[str, Any], preview=False) -> List[Image.Image]:
+def format(template, csv, fields: Dict[str, Any], preview=False) -> List[BytesIO]:
     template = Image.open(BytesIO(template))
     images = []
-    print(csv)
     for entry in csv[:-1]:
-        start = time()
         new_image = template.copy()
         draw = ImageDraw.Draw(new_image)
         for name, value in entry.items():
             if "percentage" not in fields[name]:
                 continue
             field = fields[name]
-            print(field["font"])
             font = ImageFont.truetype("./static/fonts/" + field["font"], int(field["size"]))
             coordinates = percent_to_pixels(field["percentage"], template.size)
             draw.text(
@@ -101,16 +98,15 @@ def format(template, csv, fields: Dict[str, Any], preview=False) -> List[Image.I
                 text=value,
                 fill=(0, 0, 0, 255),
                 font=font,
-                anchor="mm",
             )
-        print(time() - start)
         if preview:
             buffered = BytesIO()
             new_image.thumbnail((1024, 1024), Image.ANTIALIAS)
             new_image.save(buffered, format="PNG")
             return base64.b64encode(buffered.getvalue())
-
-        images.append(new_image)
+        buffered = BytesIO()
+        new_image.save(buffered, "PNG")
+        images.append(buffered)
     return images
 
 

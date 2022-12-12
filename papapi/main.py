@@ -10,7 +10,7 @@ from fastapi.responses import HTMLResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import base64
-from zipfile import ZipFile
+import zipfile
 from io import BytesIO
 
 from formatter import format
@@ -22,7 +22,6 @@ TEMP_DIR_PATH = "/tmp/"
 for file in glob.glob(TEMP_DIR_PATH + "*.zip"):
     if len(file.split("/")[-1]) == 36:
         os.remove(file)
-        print(file)
 
 formatting = {}
 
@@ -73,14 +72,10 @@ def post_preview(image: Image):
 
 def task_format(image, id):
     images = format(base64.b64decode(image.template), image.csv, image.fields)
-    zip_io = BytesIO()
-    zip_obj = ZipFile(zip_io, "w")
+    zip_obj = zipfile.ZipFile(TEMP_DIR_PATH + id + ".zip", "w", compression=zipfile.ZIP_STORED)
     for num, image in enumerate(images, start=1):
-        buffered = BytesIO()
-        image.save(buffered, format="PNG")
-        zip_obj.writestr(f"{num}.png", buffered.getvalue())
+        zip_obj.writestr(f"{num}.png", image.getvalue())
     zip_obj.close()
-    open(TEMP_DIR_PATH + id + ".zip", "wb").write(zip_io.getvalue())
     formatting[id] = True
 
 
