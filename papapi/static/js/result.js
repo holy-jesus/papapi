@@ -10,7 +10,7 @@ function close() {
 }
 
 function downloadResult() {
-    // TODO
+    window.location.href = "/download?id=" + sessionStorage.getItem("id")
 }
 
 function restart(c) {

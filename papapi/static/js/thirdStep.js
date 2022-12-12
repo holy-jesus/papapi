@@ -1,13 +1,15 @@
-let db;
-let dbVersion = 1;
+var db;
+var dbVersion = 1;
 var columnsFromCsv = Object.keys(JSON.parse(sessionStorage.getItem("csv"))[0]);
-var dataToBackend = {"fields": {}};
+var dataToBackend = { "fields": {} };
 var current = 0;
+
+const delay = ms => new Promise(res => setTimeout(res, ms));
 
 document.addEventListener('DOMContentLoaded', () => {
     dataToBackend["csv"] = JSON.parse(sessionStorage.getItem("csv"));
     for (const column of columnsFromCsv) {
-        dataToBackend["fields"][column] = {"font": "Ubuntu-L.ttf", "size": 16, "color": (0, 0, 0, 255)}
+        dataToBackend["fields"][column] = { "font": "DejaVuSansMono.ttf", "size": 16, "color": (0, 0, 0, 255) }
     }
     document.getElementById("columnName").innerHTML = columnsFromCsv[current]
     initDb(loadImage);
@@ -15,16 +17,15 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function close() {
-    //$("body").css("opacity", "0");
-
-
-    //setTimeout(function() {
-    //    window.location.href = "/result";
-    //}, 500);
+    sessionStorage.setItem("step", 4);
+    $("body").css("opacity", "0");
+    setTimeout(function () {
+        window.location.href = "/result";
+    }, 500);
 }
 
 function initDb(callback) {
-    let request = indexedDB.open('diplomas', dbVersion);
+    var request = indexedDB.open('diplomas', dbVersion);
     request.onerror = function (e) {
         console.error('Unable to open database.');
     }
@@ -41,17 +42,17 @@ function initDb(callback) {
 }
 
 function loadImage() {
-    let image = document.querySelector('#iimage');
-    let trans = db.transaction(['image'], 'readonly');
-    let objectStore = trans.objectStore('image');
+    var image = document.querySelector('#iimage');
+    var trans = db.transaction(['image'], 'readonly');
+    var objectStore = trans.objectStore('image');
     var openCursorRequest = objectStore.openCursor(null, 'prev');
 
     openCursorRequest.onsuccess = function (event) {
         if (event.target.result) {
-            let maxTimeStamp = event.target.result.value;
-            let req = objectStore.get(maxTimeStamp['timestamp']);
+            var maxTimeStamp = event.target.result.value;
+            var req = objectStore.get(maxTimeStamp['timestamp']);
             req.onsuccess = function (e) {
-                let record = e.target.result;
+                var record = e.target.result;
                 dataToBackend["template"] = btoa(record.data);
                 image.src = 'data:image/png;base64,' + btoa(record.data);
             }
@@ -72,8 +73,6 @@ function update2(c) {
 
 function printMousePos(event) {
     var elemRect = event.target.getBoundingClientRect();
-    console.log(elemRect)
-    console.log((event.clientX - elemRect.left) + "|" + (event.clientY - elemRect.top))
     if (event.target.tagName == "IMG") {
         if ((current + 2) > columnsFromCsv.length) {
             document.getElementById("showpreview").removeAttribute("hidden")
@@ -130,31 +129,31 @@ function prev() {
     current = current + 1
 }
 
-function loading () {
-    gsap.timeline({repeat:-1})
-        .to('.b1', {duration:0.4, y:-25, ease:'power3', transformOrigin:'50% 50%'}, 0)
-        .to('.b1', {duration:0.55, y:55, ease:'power2.inOut'}, 0.35)
-        .to('.b1', {duration:0.9, x:120, ease:'expo.inOut'}, 0.4)
-        .to('.b1', {duration:0.6, scale:0.82, ease:'power3.in', yoyo:true, repeat:1}, 0.25)
-        .to('.b1', {duration:0.4, y:0, ease:'back.out(6)'}, 0.95)
-        .to('.b1', {duration:0.4, rotation:-270, ease:'power1.in'}, 0.9)
+function loading() {
+    gsap.timeline({ repeat: -1 })
+        .to('.b1', { duration: 0.4, y: -25, ease: 'power3', transformOrigin: '50% 50%' }, 0)
+        .to('.b1', { duration: 0.55, y: 55, ease: 'power2.inOut' }, 0.35)
+        .to('.b1', { duration: 0.9, x: 120, ease: 'expo.inOut' }, 0.4)
+        .to('.b1', { duration: 0.6, scale: 0.82, ease: 'power3.in', yoyo: true, repeat: 1 }, 0.25)
+        .to('.b1', { duration: 0.4, y: 0, ease: 'back.out(6)' }, 0.95)
+        .to('.b1', { duration: 0.4, rotation: -270, ease: 'power1.in' }, 0.9)
 
-        .to('.b', {duration:0.9, x:-30, ease:'expo.inOut', stagger:0.04}, 0.3)
-        .to('.b', {duration:0.45, rotation:5, stagger:0.04, ease:'power3.in', transformOrigin:'60% 95%'}, 0.3)
-        .to('.b', {duration:0.4, rotation:0, stagger:0.04, ease:'back.out(10)'}, 0.85)
+        .to('.b', { duration: 0.9, x: -30, ease: 'expo.inOut', stagger: 0.04 }, 0.3)
+        .to('.b', { duration: 0.45, rotation: 5, stagger: 0.04, ease: 'power3.in', transformOrigin: '60% 95%' }, 0.3)
+        .to('.b', { duration: 0.4, rotation: 0, stagger: 0.04, ease: 'back.out(10)' }, 0.85)
 }
 
-function sweapDisplay () {
-    get=document.querySelector.bind(document)
+function sweapDisplay() {
+    get = document.querySelector.bind(document)
 
-    first=get("#main")
-    second=get("#loading")
+    first = get("#main")
+    second = get("#loading")
 
     first.style.opacity = 0;
 
-    setTimeout(function() {
-        first.style.display="none";
-        second.style.display="block";;
+    setTimeout(function () {
+        first.style.display = "none";
+        second.style.display = "block";
     }, 500)
 
     loading();
@@ -162,13 +161,45 @@ function sweapDisplay () {
     second.style.opacity = 1;
 }
 
-function nextPage() {
-    
-    sessionStorage.setItem("dataToBackend", JSON.stringify(dataToBackend))
+async function getId(callback) {
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.onreadystatechange = () => {
+        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+            var js = JSON.parse(xmlHttp.responseText)
+            callback(js["id"])
+        }
+    }
+    xmlHttp.open("POST", "/format", true)
+    xmlHttp.setRequestHeader("Content-type", "application/json")
+    xmlHttp.send(JSON.stringify(dataToBackend));
+}
+
+async function checkIfReady(id) {
+    console.log(id)
+    var xmlHttp = new XMLHttpRequest();
+    var done = false;
+    xmlHttp.onreadystatechange = () => {
+        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+            var js = JSON.parse(xmlHttp.responseText)
+            done = js['done']
+        }
+    };
+    while (true) {
+        await delay(2000);
+        xmlHttp.open("GET", "/status?id=" + id, true);
+        xmlHttp.send(null);
+        if (done) break;
+    };
+    sessionStorage.setItem("id", id)
+    close();
+}
+
+async function nextPage() {
 
     sweapDisplay();
-    
-    //close();
+    getId(checkIfReady);
+
+    // close();
 }
 
 document.addEventListener("click", printMousePos);

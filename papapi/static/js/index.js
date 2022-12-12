@@ -1,55 +1,68 @@
-let db;
-let dbVersion = 1;
+var db;
+var dbVersion = 1;
 
 document.addEventListener('DOMContentLoaded', () => {
     initDb();
-    document.querySelector('#picture').addEventListener('change', saveImage );
+    document.querySelector('#picture').addEventListener('change', saveImage);
     $("body").css("opacity", "1");
 });
 
 function close() {
+    sessionStorage.setItem("step", 2);
     $("body").css("opacity", "0");
-    setTimeout(function() {
+    setTimeout(function () {
         window.location.href = "/second_step";
     }, 500);
-}
+};
 
 function initDb() {
-    let request = indexedDB.open('diplomas', dbVersion);
-    request.onerror = function(e) {
+    var request = indexedDB.open('diplomas', dbVersion);
+    request.onerror = function (e) {
         console.error('Unable to open database.');
-    }
-    request.onsuccess = function(e) {
+    };
+    request.onsuccess = function (e) {
         db = e.target.result;
         console.log('db opened');
-    }
-    request.onupgradeneeded = function(e) {
+    };
+    request.onupgradeneeded = function (e) {
         db = e.target.result;
-        db.createObjectStore('image', {keyPath:"timestamp"});
-    }
-}
+        db.createObjectStore('image', { keyPath: "timestamp" });
+    };
+};
 
 function saveImage(e) {
-    let file = e.target.files[0];
+    var file = e.target.files[0];
     var reader = new FileReader();
     reader.readAsBinaryString(file);
-    reader.onload = function(e) {
-        let bits = e.target.result;
-        let ob = {
-            timestamp:Date.now(),
-            data:bits
+    reader.onload = function (e) {
+        var bits = e.target.result;
+        var ob = {
+            timestamp: Date.now(),
+            data: bits
         };
-        let trans = db.transaction(['image'], 'readwrite');
-        let addReq = trans.objectStore('image').add(ob);
-        addReq.onerror = function(e) {
-            console.log('error storing data');
-            console.error(e);
-        }
-
-        trans.oncomplete = function(e) {
-            sessionStorage.setItem("step", 2);
-            close();
-            
-        }
-    }
-}
+        var trans = db.transaction(['image'], 'readwrite');
+        var objectStore = trans.objectStore('image');
+        var countRequest = objectStore.count();
+        countRequest.onsuccess = () => {
+            var amount = countRequest.result;
+            var openCursorRequest = objectStore.openCursor(null);
+            openCursorRequest.onsuccess = function (event) {
+                var cursor = event.target.result;
+                if (cursor && amount >= 5) {
+                    objectStore.delete(cursor.key);
+                    amount = amount - 1;
+                    cursor.continue();
+                }
+            }
+            var addReq = objectStore.add(ob);
+            addReq.onerror = (e) => {
+                console.log('Error storing data');
+                console.error(e);
+            };
+            addReq.onsuccess = function (e) {
+                console.log("Added image to IndexedDB")
+                close();
+            };
+        };
+    };
+};

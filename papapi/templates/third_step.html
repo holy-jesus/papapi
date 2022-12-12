@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 
 <head>
@@ -18,7 +19,7 @@
                         id="columnName"></a><br><br>
                     шрифт - <select size="1px" id="a" style="height: 40; width: 120; text-align: center; font-size: 16;"
                         onchange="">
-                        <option style="font: Ubuntu-L">Ubuntu-L.ttf</option>
+                        <option>DejaVuSansMono.ttf</option>
                     </select><br><br>
                     размер шрифта - <input type="number" id="b"
                         style="height: 40; width: 75; text-align: center; font-size: 26;" onchange="update2(this.value)"
@@ -29,7 +30,7 @@
                         style="height: 40; text-align: center;" hidden="true">
                 </td>
             </table>
-            <button class="button1" onclick="nextPage()" id="load">
+            <button hidden="true" class="button1" onclick="nextPage()" id="buttonnext">
                 Далее
             </button>
         </div>
@@ -41,9 +42,9 @@
             <span class="step"></span>
         </div>
 
-        <script src="static/js/thirdStep.js"></script>
+        <script src="static/js/thirdStep.min.js"></script>
         <script src="static/js/jquery.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/gsap.min.js"></script>
+        <script src="static/js/gsap.min.js"></script>
     </div>
 
     <div id="loading" style="opacity:0;transition:.5s;display: none;">

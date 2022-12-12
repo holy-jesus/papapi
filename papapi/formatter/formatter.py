@@ -84,7 +84,8 @@ def percent_to_pixels(areas, size_of_image):
 def format(template, csv, fields: Dict[str, Any], preview=False) -> List[Image.Image]:
     template = Image.open(BytesIO(template))
     images = []
-    for entry in csv:
+    print(csv)
+    for entry in csv[:-1]:
         start = time()
         new_image = template.copy()
         draw = ImageDraw.Draw(new_image)

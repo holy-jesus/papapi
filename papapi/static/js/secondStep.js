@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function close() {
+    sessionStorage.setItem("step", 3);
     $("body").css("opacity", "0");
     setTimeout(function() {
         window.location.href = "/third_step";
