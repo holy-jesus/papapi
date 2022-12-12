@@ -3,6 +3,7 @@ from string import ascii_letters, digits
 from random import choice
 import asyncio
 import glob
+from typing import Optional
 
 import aiofiles
 from fastapi import FastAPI
@@ -18,10 +19,15 @@ from formatter import format
 DEBUG = __name__ == "__main__"
 BASE_PATH = os.getcwd()
 TEMPLATES_PATH = BASE_PATH + "/templates/"
-TEMP_DIR_PATH = "/tmp/"
-for file in glob.glob(TEMP_DIR_PATH + "*.zip"):
-    if len(file.split("/")[-1]) == 36:
-        os.remove(file)
+TEMP_ZIP_PATH = "/tmp/zip/"
+TEMP_FONT_PATH = "/tmp/font/"
+
+for temp_path in (TEMP_FONT_PATH, TEMP_ZIP_PATH):
+    if not os.path.exists(temp_path):
+        os.mkdir(temp_path)
+    for file in glob.glob(temp_path + "*.*"):
+        if len(file.split("/")[-1]) == 36:
+            os.remove(file)
 
 formatting = {}
 
@@ -30,6 +36,11 @@ class Image(BaseModel):
     csv: list
     template: str
     fields: dict
+
+
+class Font(BaseModel):
+    font: str
+    filename: str
 
 
 app = FastAPI(debug=DEBUG)
@@ -72,7 +83,9 @@ def post_preview(image: Image):
 
 def task_format(image, id):
     images = format(base64.b64decode(image.template), image.csv, image.fields)
-    zip_obj = zipfile.ZipFile(TEMP_DIR_PATH + id + ".zip", "w", compression=zipfile.ZIP_STORED)
+    zip_obj = zipfile.ZipFile(
+        TEMP_ZIP_PATH + id + ".zip", "w", compression=zipfile.ZIP_STORED
+    )
     for num, image in enumerate(images, start=1):
         zip_obj.writestr(f"{num}.png", image.getvalue())
     zip_obj.close()
@@ -87,6 +100,12 @@ async def post_format(image: Image):
     return {"id": id}
 
 
+@app.post("/font")
+async def font(font_file: Font):
+    file = await aiofiles.open(TEMP_FONT_PATH + font_file.filename, "wb")
+    await file.write(base64.b64decode(font_file.font))
+    await file.close()
+
 @app.get("/status")
 def status(id: str):
     return {"done": formatting[id]}
@@ -96,13 +115,14 @@ def status(id: str):
 def download(id: str):
     if id in formatting:
         if formatting[id]:
-            return FileResponse(TEMP_DIR_PATH + id + ".zip", filename="Дипломы.zip")
+            return FileResponse(TEMP_ZIP_PATH + id + ".zip", filename="Дипломы.zip")
         else:
             # Значит человек пытается либо сломать сайт и пытается скачать ещё не сделанный архив
             # Либо произошёл баг
             ...
     else:
         return Response(content={"error": "Invalid ID"}, status_code=404)
+
 
 if DEBUG:
     # For debug

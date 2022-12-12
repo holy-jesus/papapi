@@ -3,6 +3,7 @@ from time import time
 from typing import Any, Literal, Union, List, Dict
 import base64
 from io import BytesIO
+import os.path
 
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 
@@ -81,6 +82,12 @@ def percent_to_pixels(areas, size_of_image):
     return (size_of_image[0] * areas[0], size_of_image[1] * areas[1])
 
 
+def get_font_path(font_name):
+    for path in ("./static/fonts", "/tmp/font/"):
+        if os.path.exists(path + font_name):
+            return path + font_name
+
+
 def format(template, csv, fields: Dict[str, Any], preview=False) -> List[BytesIO]:
     template = Image.open(BytesIO(template))
     images = []
@@ -91,7 +98,7 @@ def format(template, csv, fields: Dict[str, Any], preview=False) -> List[BytesIO
             if "percentage" not in fields[name]:
                 continue
             field = fields[name]
-            font = ImageFont.truetype("./static/fonts/" + field["font"], int(field["size"]))
+            font = ImageFont.truetype(get_font_path(field["font"]), int(field["size"]))
             coordinates = percent_to_pixels(field["percentage"], template.size)
             draw.text(
                 coordinates,

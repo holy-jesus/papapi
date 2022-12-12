@@ -7,6 +7,7 @@ var current = 0;
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 document.addEventListener('DOMContentLoaded', () => {
+    document.querySelector('#font').addEventListener('change', sendFont);
     dataToBackend["csv"] = JSON.parse(sessionStorage.getItem("csv"));
     for (const column of columnsFromCsv) {
         dataToBackend["fields"][column] = { "font": "Arimo-Regular.ttf", "size": 16, "color": (0, 0, 0, 255) }
@@ -15,6 +16,31 @@ document.addEventListener('DOMContentLoaded', () => {
     initDb(loadImage);
     $("body").css("opacity", "1");
 });
+
+function sendFont(e) {
+    var file = e.target.files[0];
+    var filename = file.name;
+    var reader = new FileReader();
+    reader.readAsBinaryString(file);
+    reader.onload = function (e) {
+        var bits = btoa(e.target.result);
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = () => {
+            if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+                var select = document.getElementById("a")
+                var opt = document.createElement("option")
+                opt.value = filename;
+                opt.innerHTML = filename;
+                select.add(opt)
+                select.value = filename;
+            }
+        }
+        xmlHttp.open("POST", "/font", true)
+        xmlHttp.setRequestHeader("Content-type", "application/json")
+        xmlHttp.send(JSON.stringify({"font": bits, "filename": filename}))
+    }
+
+}
 
 function close() {
     sessionStorage.setItem("step", 4);
@@ -102,7 +128,6 @@ function download_preview() {
     }
     xmlHttp.open("POST", "/preview", true);
     xmlHttp.setRequestHeader("Content-type", "application/json")
-    console.log(dataToBackend)
     xmlHttp.send(JSON.stringify(dataToBackend));
 
 }
