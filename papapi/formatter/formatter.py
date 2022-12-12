@@ -83,7 +83,7 @@ def percent_to_pixels(areas, size_of_image):
 
 
 def get_font_path(font_name):
-    for path in ("./static/fonts", "/tmp/font/"):
+    for path in ("./static/fonts/", "/tmp/font/"):
         if os.path.exists(path + font_name):
             return path + font_name
 
