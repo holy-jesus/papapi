@@ -1,3 +1,7 @@
+if (!sessionStorage.getItem("id")) {
+    
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     $("body").css("opacity", "1");
 });
@@ -13,7 +17,7 @@ function downloadResult() {
     window.location.href = "/download?id=" + sessionStorage.getItem("id")
 }
 
-function restart(c) {
+function restart() {
     sessionStorage.clear()
     close();
 }

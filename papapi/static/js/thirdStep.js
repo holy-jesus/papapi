@@ -9,7 +9,7 @@ const delay = ms => new Promise(res => setTimeout(res, ms));
 document.addEventListener('DOMContentLoaded', () => {
     dataToBackend["csv"] = JSON.parse(sessionStorage.getItem("csv"));
     for (const column of columnsFromCsv) {
-        dataToBackend["fields"][column] = { "font": "DejaVuSansMono.ttf", "size": 16, "color": (0, 0, 0, 255) }
+        dataToBackend["fields"][column] = { "font": "Arimo-Regular.ttf", "size": 16, "color": (0, 0, 0, 255) }
     }
     document.getElementById("columnName").innerHTML = columnsFromCsv[current]
     initDb(loadImage);
@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function close() {
     sessionStorage.setItem("step", 4);
+    db.close()
     $("body").css("opacity", "0");
     setTimeout(function () {
         window.location.href = "/result";

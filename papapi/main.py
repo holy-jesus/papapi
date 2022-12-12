@@ -109,7 +109,6 @@ def download(id: str):
     else:
         return Response(content={"error": "Invalid ID"}, status_code=404)
 
-
 if DEBUG:
     # For debug
     import uvicorn

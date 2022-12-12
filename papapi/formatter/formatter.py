@@ -93,7 +93,8 @@ def format(template, csv, fields: Dict[str, Any], preview=False) -> List[Image.I
             if "percentage" not in fields[name]:
                 continue
             field = fields[name]
-            font = ImageFont.truetype(field["font"], int(field["size"]))
+            print(field["font"])
+            font = ImageFont.truetype("./static/fonts/" + field["font"], int(field["size"]))
             coordinates = percent_to_pixels(field["percentage"], template.size)
             draw.text(
                 coordinates,
@@ -105,6 +106,7 @@ def format(template, csv, fields: Dict[str, Any], preview=False) -> List[Image.I
         print(time() - start)
         if preview:
             buffered = BytesIO()
+            new_image.thumbnail((1024, 1024), Image.ANTIALIAS)
             new_image.save(buffered, format="PNG")
             return base64.b64encode(buffered.getvalue())
 

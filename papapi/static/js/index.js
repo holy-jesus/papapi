@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function close() {
     sessionStorage.setItem("step", 2);
+    db.close()
     $("body").css("opacity", "0");
     setTimeout(function () {
         window.location.href = "/second_step";
