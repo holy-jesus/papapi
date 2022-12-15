@@ -22,12 +22,11 @@ body {
     
     font-family: 'Rubik', sans-serif;
 }
-.form1:focus button {
+button:focus {
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
 }
-
 /* Hover/active */
-.form1:hover button {
+button:hover {
     background-color: #13639f;
 }
 .input-file {
