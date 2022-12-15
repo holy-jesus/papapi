@@ -1,3 +1,7 @@
+if (!sessionStorage.getItem("csv") || sessionStorage.getItem("step") < 3) {
+    window.location.href = "/"
+}
+
 var db;
 var dbVersion = 1;
 var columnsFromCsv = Object.keys(JSON.parse(sessionStorage.getItem("csv"))[0]);

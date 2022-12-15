@@ -1,3 +1,7 @@
+if (sessionStorage.getItem("step") < 2) {
+    window.location.href = "/"
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('#csv').addEventListener('change', saveCSV);
     $("body").css("opacity", "1");

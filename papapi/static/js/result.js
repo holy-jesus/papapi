@@ -1,5 +1,6 @@
-if (!sessionStorage.getItem("id")) {
-    
+if (!sessionStorage.getItem("id") || sessionStorage.getItem("step") < 4) {
+    sessionStorage.clear()
+    window.location.href = "/"
 }
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -125,7 +125,6 @@ def download(id: str):
 
 
 if DEBUG:
-    # For debug
     import uvicorn
 
     uvicorn.run(app, host="localhost", port=5000)
