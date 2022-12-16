@@ -3,7 +3,6 @@ from string import ascii_letters, digits
 from random import choice
 import asyncio
 import glob
-from typing import Optional
 
 import aiofiles
 from fastapi import FastAPI
@@ -12,9 +11,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import base64
 import zipfile
-from io import BytesIO
 
-from formatter import format
+from formatter import format # type: ignore
 
 DEBUG = __name__ == "__main__"
 BASE_PATH = os.getcwd()

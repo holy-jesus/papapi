@@ -1,89 +1,126 @@
 from random import randint
 from time import time
-from typing import Any, Literal, Union, List, Dict
+from typing import Any, Tuple, List, Dict
 import base64
 from io import BytesIO
 import os.path
 
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 
-# From https://stackoverflow.com/questions/70038903/
+
+def getbbox(text: str, font: ImageFont.FreeTypeFont) -> Tuple[int, int, int]:
+    _, _, w, word_h = font.getbbox(text)
+    h = word_h
+    if "\n" in text:
+        h = word_h * (text.count("\n") + 1)
+        all_w = []
+        for word in text.split("\n"):
+            w, _, _ = getbbox(word, font)
+            all_w.append(w)
+        w = max(all_w)
+    return w, h, word_h
 
 
-def break_fix(text, width, font, draw):
-    """
-    Fix line breaks in text.
-    """
-    if not text:
-        return
+def start_point(text: str, font: ImageFont.FreeTypeFont) -> Tuple[int, int]:
+    x, y, _, _ = font.getbbox(text)
+    return -x, -y
+
+
+def break_text(
+    text: str, font: ImageFont.FreeTypeFont, allowed_width: int, allowed_height: int
+) -> Tuple[str, int, int]:
     if isinstance(text, str):
-        text = text.split()  # this creates a list of words
-
-    lo = 0
-    hi = len(text)
-    while lo < hi:
-        mid = (lo + hi + 1) // 2
-        t = " ".join(text[:mid])  # this makes a string again
-        _, _, w, h = draw.textbbox((0, 0), t, font=font)
-        if w <= width:
-            lo = mid
+        splitted = text.split()
+    text = ""
+    for num, word in enumerate(splitted):
+        width, height, word_height = getbbox(text + word, font)
+        if num == 0:
+            if (
+                width > allowed_width
+                or word_height * (text.count("\n") + 2) > allowed_height
+            ):
+                return None, width, height
+        if width > allowed_width:
+            width, height, word_height = getbbox(text[:-1] + "\n" + word, font)
+            if height > allowed_height:
+                text = text + " ".join(splitted[num:])
+                width, height, word_height = getbbox(text, font)
+                if width < allowed_width:
+                    return text, width, height
+                else:
+                    return None, width, height
+            text = text[:-1] + "\n" + word + " "
         else:
-            hi = mid - 1
-    t = " ".join(text[:lo])  # this makes a string again
-    _, _, w, h = draw.textbbox((0, 0), t, font=font)
-    yield t, w, h
-    yield from break_fix(text[lo:], width, font, draw)
+            text += word + " "
+    if width > allowed_width:
+        return None, width, height
+    return text[:-1], width, height
 
 
-def fit_text(img, text, color, font, x_start_offset=0, x_end_offset=0, center=False):
-    """
-    Fit text into container after applying line breaks. Returns the total
-    height taken up by the text, which can be used to create containers of
-    dynamic heights.
-    """
-    width = img.size[0] - x_start_offset - x_end_offset
-    draw = ImageDraw.Draw(img)
-    pieces = list(break_fix(text, width, font, draw))
-    height = sum(p[2] for p in pieces)
-    y = (img.size[1] - height) // 2
-    h_taken_by_text = 0
-    for t, w, h in pieces:
-        if center:
-            x = (img.size[0] - w) // 2
+def fit_text(
+    text: str,
+    font: ImageFont.FreeTypeFont,
+    allowed_width: int,
+    allowed_height: int,
+    unbreakable: bool = None,
+) -> Tuple[ImageFont.FreeTypeFont, str]:
+    text = text.strip()
+    width, height, _ = getbbox(text, font)
+    if width > allowed_width and not unbreakable:
+        # Если ширина текста слишком большая, разбиваем текст на несколько частей
+        new_text, width, height = break_text(text, font, allowed_width, allowed_height)
+        if new_text:
+            text = new_text
         else:
-            x = x_start_offset
-        draw.text((x, y), t, font=font, fill=color)
-        _, _, new_width, new_height = draw.textbbox((0, 0), t, font=font)
-        y += h
-        h_taken_by_text += new_height
-    return h_taken_by_text
-
-
-def generate_text_section(
-    width, text, color, font, x_start_offset, x_end_offset, v_spacing
-):
-    """
-    Generates an image for a text section.
-    """
-    # Calculate height using "fake" canvas
-    img = Image.new("RGB", (width, 1), color="white")
-    calc_height = fit_text(
-        img, text.upper(), color, font, x_start_offset, x_end_offset, False
-    )
-
-    # Create real canvas and fit text
-    img = Image.new("RGB", (width, calc_height + v_spacing), color="white")
-    fit_text(img, text.upper(), color, font, x_start_offset, x_end_offset, False)
-
-    return img
+            return fit_text(text, font, allowed_width, allowed_height, True)
+    elif (width > allowed_width or height > allowed_height) or unbreakable is not None:
+        start = 0
+        end = font.size
+        while True:
+            font_range = range(start, end)
+            if len(font_range) == 1:
+                font_size = font_range[0]
+                break
+            font_size = font_range[len(font_range) // 2]
+            new_font = font.font_variant(size=font_size)
+            width, height, _ = getbbox(text, new_font)
+            if height > allowed_height and width > allowed_width:
+                # Если у нас шрифт слишком большой, то просто уменьшаем его
+                end = font_size
+            elif width > allowed_width:
+                # Если ширина текста слишком большая, разбиваем текст на несколько частей
+                new_text, width, height = break_text(
+                    text, new_font, allowed_width, allowed_height
+                )
+                if new_text:  # Если пришёл текст, значит подходит по размерам.
+                    text = new_text
+                else:  # Если нет, то слишком большой шрифт, уменьшаем.
+                    end = font_size
+            elif height <= allowed_height and width <= allowed_width:
+                # Если у нас слишком маленький шрифт, то увеличиваем его.
+                # Кстати, чёрт его знает почему, но если убрать <=, то он просто
+                # не выходит из цикла, не смотря на то, что это не имеет никакого смысла.
+                start = font_size
+            elif height >= allowed_height and width <= allowed_width:
+                end = font_size
+            else:
+                # Вот этого точно не должно произойти
+                raise Exception("BRUH")
+        font = font.font_variant(size=font_size)
+    return font, text
 
 
 def percent_to_pixels(areas, size_of_image):
-    return (size_of_image[0] * areas[0], size_of_image[1] * areas[1])
+    return (
+        size_of_image[0] * areas['start'][0],
+        size_of_image[1] * areas['start'][1],
+        size_of_image[0] * areas['end'][0],
+        size_of_image[1] * areas['end'][1],
+    )
 
 
 def get_font_path(font_name):
-    for path in ("./static/fonts/", "/tmp/font/"):
+    for path in ("/tmp/font/", "./static/fonts/"):
         if os.path.exists(path + font_name):
             return path + font_name
 
@@ -95,53 +132,25 @@ def format(template, csv, fields: Dict[str, Any], preview=False) -> List[BytesIO
         new_image = template.copy()
         draw = ImageDraw.Draw(new_image)
         for name, value in entry.items():
-            if "percentage" not in fields[name]:
+            if not fields[name]["percentage"]:
                 continue
             field = fields[name]
             font = ImageFont.truetype(get_font_path(field["font"]), int(field["size"]))
-            coordinates = percent_to_pixels(field["percentage"], template.size)
+            x, y, w, h = percent_to_pixels(field["percentage"], template.size)
+            print(x, y, w, h)
+            font, text = fit_text(value, font, w - x, h - y)
             draw.text(
-                coordinates,
-                text=value,
-                fill=(0, 0, 0, 255),
+                (x, y),
+                text=text,
+                fill=fields[name]["color"],
                 font=font,
             )
         if preview:
-            buffered = BytesIO()
             new_image.thumbnail((1024, 1024), Image.ANTIALIAS)
+            buffered = BytesIO()
             new_image.save(buffered, format="PNG")
             return base64.b64encode(buffered.getvalue())
         buffered = BytesIO()
         new_image.save(buffered, "PNG")
         images.append(buffered)
     return images
-
-
-if __name__ == "__main__":
-    image = open("Diploma.png", "rb")
-    csv_file = open("test.csv", "r")
-    color = (randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255))
-    images = format(
-        image,
-        csv_file,
-        {
-            "ФИО": (
-                0.5,
-                0.5,
-                0.5,
-                0.5,
-            ),
-            "Место": (
-                0.6177069028190262,
-                0.5972659137562726,
-                0.32181547022483903,
-                0.24085927857201173,
-            ),
-        },
-        {
-            "ФИО": {"font": "Ubuntu-L.ttf", "color": color, "size": 300},
-            "Место": {"font": "Ubuntu-L.ttf", "color": color, "size": 300},
-        },
-    )
-    for image in images:
-        image.show()
