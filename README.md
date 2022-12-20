@@ -16,7 +16,7 @@ curl -fsSL https://raw.githubusercontent.com/holy-jesus/papapi/main/install.sh |
 `
 ./run.sh
 `
-И перейти по ссылке http://localhost:5000/
+Сайт будет располагаться по ссылке: http://localhost:5000/
 
 ### Самостоятельно:
 1. Установите Python и git
