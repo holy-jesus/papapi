@@ -74,6 +74,8 @@ def fit_text(
         else:
             return fit_text(text, font, allowed_width, allowed_height, True)
     elif (width > allowed_width or height > allowed_height) or unbreakable is not None:
+        # Если текст слишком большой по ширине и высоте, то уменьшаем текст разбивая
+        # его на несколько частей
         start = 0
         end = font.size
         while True:
@@ -99,7 +101,7 @@ def fit_text(
             elif height <= allowed_height and width <= allowed_width:
                 # Если у нас слишком маленький шрифт, то увеличиваем его.
                 # Кстати, чёрт его знает почему, но если убрать <=, то он просто
-                # не выходит из цикла, не смотря на то, что это не имеет никакого смысла.
+                # не выходит из цикла и я понять не могу почему.
                 start = font_size
             elif height >= allowed_height and width <= allowed_width:
                 end = font_size
@@ -137,10 +139,13 @@ def format(template, csv, fields: Dict[str, Any], preview=False) -> List[BytesIO
             field = fields[name]
             font = ImageFont.truetype(get_font_path(field["font"]), int(field["size"]))
             x, y, w, h = percent_to_pixels(field["percentage"], template.size)
-            print(x, y, w, h)
-            font, text = fit_text(value, font, w - x, h - y)
+            top = min(y, h)
+            left = min(x, w)
+            height = max(y, h)
+            width = max(x, w)
+            font, text = fit_text(value, font, width - left, height - top)
             draw.text(
-                (x, y),
+                (left, top),
                 text=text,
                 fill=fields[name]["color"],
                 font=font,

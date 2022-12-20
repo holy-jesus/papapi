@@ -3,6 +3,7 @@ from string import ascii_letters, digits
 from random import choice
 import asyncio
 import glob
+import webbrowser
 
 import aiofiles
 from fastapi import FastAPI
@@ -19,13 +20,6 @@ BASE_PATH = os.getcwd()
 TEMPLATES_PATH = BASE_PATH + "/templates/"
 TEMP_ZIP_PATH = "/tmp/zip/"
 TEMP_FONT_PATH = "/tmp/font/"
-
-for temp_path in (TEMP_FONT_PATH, TEMP_ZIP_PATH):
-    if not os.path.exists(temp_path):
-        os.mkdir(temp_path)
-    for file in glob.glob(temp_path + "*.*"):
-        if len(file.split("/")[-1]) == 36:
-            os.remove(file)
 
 formatting = {}
 
@@ -44,6 +38,27 @@ class Font(BaseModel):
 app = FastAPI(debug=DEBUG)
 app.mount("/static", StaticFiles(directory="./static"), name="static")
 
+def clean_temp_folders():
+    for temp_path in (TEMP_FONT_PATH, TEMP_ZIP_PATH):
+        if not os.path.exists(temp_path):
+            os.mkdir(temp_path)
+        for file in glob.glob(temp_path + "*.*"):
+            os.remove(file)
+
+async def open_browser():
+    await asyncio.sleep(1)
+    webbrowser.open("localhost:5000", new=0, autoraise=True)
+
+
+@app.on_event("startup")
+async def startup_event():
+    clean_temp_folders()
+    asyncio.create_task(open_browser())
+
+
+@app.on_event("shutdown")
+def shutdown_event():
+    clean_temp_folders()
 
 async def open_template(filename: str):
     file = await aiofiles.open(TEMPLATES_PATH + filename, "r")
@@ -120,7 +135,6 @@ def download(id: str):
             ...
     else:
         return Response(content={"error": "Invalid ID"}, status_code=404)
-
 
 if DEBUG:
     import uvicorn
